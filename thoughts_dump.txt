@@ -1,0 +1,110 @@
+Okay I want to start a new project with you. I need you to fetch me some property lots in MA that I can use for a solar project. I have a lot of invariable constraints and you have the freedom to decide your tools, processes and methodologies.
+Hard constraints:
+Grid Interconnection;
+1) Feeder Congestion
+2) Distance to substation
+3) Hosting capicity
+4) Phase
+5) Utility territory (national grid vs eversource)
+
+Locations to check MA Clean Energy Center (mass CEC) hosting capicity map. 
+Utility hosting capicity maps (eversource /n-grid)
+
+Green / yellow circuits == viable
+Zoning;
+Is ground mounted solar allowed
+by right vs special permit vs prohibited
+max system size thresholds
+accessory vs primary use ruels
+hidden gotchasn on-site load max MW size caps
+
+Check town zoning bylaws "energy systems" "solar" sections
+Planning board dceisions (precedent matters more than rules)
+Conditions
+Wetlands, buffers, conservation traps
+Check for 
+Wetlands (DEP)
+100' buffer zones
+vernal pools
+priority Habitats / estimated habitats
+floodplains
+
+How to check;
+MassGIS Map Viewer
+NHESP Map Tool
+Town conversation comission GIS layers
+Political/social risk;
+Adjacent residential uses
+Scenic Roads
+School Bus routes
+HOA proximity
+
+
+How to check;
+Planning board meetings: search for "solar" 
+town facebook groups
+appeals in land courts
+Soil & topography;
+slope > 10-15%
+ledge
+hydric soils
+former fill
+
+
+Check in 
+USDA web soil survey
+Lidar slope maps (MssGIS)
+
+Accessibility and Buildability
+Legal frontage
+weight limits on roads
+colverts / bridges
+construction access width
+
+Check:
+assessor maps
+DPW conversations
+google street view + truck logic
+titles & Encumberances
+
+Conservation restrictions (CRs)
+Agricultural preservation restrictions (APRs)
+Old easements 
+Utility ROWs
+
+How to check
+
+Registry of deeds - "CR" "API" "Deed restriction" "Recorded plan"
+Positive signals;
+Closed landfills
+MssDEP landfill list
+town DPW maps
+Closed landfill solar searches
+
+Industrial / Commercial parcels
+easier zoning
+better grid access
+warehoues/ old mills / industrial parks / big flat rooftops (parking garages)
+
+Municipal land;
+Town controls zoning, faster approvals
+lower lease friction
+DPW Yards, old water treatmend land, town owned surplus parcels.
+
+As you can see this is an exhaustive list of features, this will require several regularly updating ingestion pipelines, rich data sources, and heavy compute with rigorous logical requirements with a clean UI. 
+
+You will need to manage this project entirely, I am available as you need for advice and validations. There need to be lots of validations at every step. 
+
+If you foresee needing any skills or access to tools or special permissions, you may request them at any time.
+Goal:
+Identify land parcels that would be ideal for lease/purchase for solar energy generation in Massachusetts given the set of constraints above.
+
+High level planning Instructions:
+
+1) Requirements planning  - Using the provided starter set of features, curate a list of all attributes a parcel of land can have. 
+
+2) Data gathering - Create sustainable production scale ingestion pipelines to gather all required from public sources and identify any sources from paid vendors. 
+
+3) Compute - Identify, rank and sort all parcels based on their feature sets. 
+
+4) Visualization - I want to be able to look at a GIS map and see the important metrics on an app that updates regularly.
