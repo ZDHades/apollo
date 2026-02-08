@@ -1,0 +1,29 @@
+# Core
+python-dotenv
+sqlalchemy
+psycopg2-binary
+geoalchemy2
+pydantic
+
+# Geospatial
+geopandas
+rasterio
+shapely
+fiona
+pyproj
+
+# Scrapers & API
+requests
+beautifulsoup4
+playwright
+
+# Data Processing
+pandas
+numpy
+xlrd
+openpyxl
+
+# Linting
+black
+isort
+flake8
