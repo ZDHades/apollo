@@ -12,7 +12,7 @@ interface MapProps {
     gridViable: boolean;
     lowWetland: boolean;
   };
-  onParcelSelect: (parcel: any) => void;
+  onParcelSelect: (id: string) => void;
 }
 
 const Map = ({ filters, onParcelSelect }: MapProps) => {
@@ -30,7 +30,8 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [lng, lat],
-      zoom: zoom
+      zoom: zoom,
+      fadeDuration: 0 // Performance boost
     });
 
     map.current.on('load', async () => {
@@ -42,7 +43,6 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
         promoteId: 'id'
       });
 
-      // Layer 1: Viability Heatmap
       map.current.addLayer({
         id: 'parcels-fill',
         type: 'fill',
@@ -52,9 +52,9 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
             'interpolate',
             ['linear'],
             ['get', 'score'],
-            0, '#ef4444',   // Red (Poor)
-            0.5, '#f59e0b', // Amber (Fair)
-            0.8, '#10b981'  // Green (Excellent)
+            0, '#ef4444',
+            0.5, '#f59e0b',
+            0.8, '#10b981'
           ],
           'fill-opacity': [
             'case',
@@ -72,7 +72,7 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
         paint: {
           'line-color': '#ffffff',
           'line-width': 0.5,
-          'line-opacity': 0.3
+          'line-opacity': 0.2
         }
       });
 
@@ -90,17 +90,10 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
       map.current.on('click', 'parcels-fill', (e) => {
         if (e.features && e.features.length > 0) {
           const feature = e.features[0];
-          const props = { ...feature.properties };
-          
-          ['enviro', 'grid', 'zoning', 'physical', 'legal', 'infra'].forEach(key => {
-            if (typeof props[key] === 'string') {
-              try { props[key] = JSON.parse(props[key]); } catch(e) {}
-            }
-          });
-
-          onParcelSelect(props);
+          const id = feature.properties?.id;
+          onParcelSelect(id);
           if (map.current) {
-            map.current.setFilter('parcels-highlight', ['==', ['get', 'id'], props.id]);
+            map.current.setFilter('parcels-highlight', ['==', ['get', 'id'], id]);
           }
         }
       });
@@ -114,7 +107,6 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
           hoveredStateId = e.features[0].id;
           if (map.current) {
             map.current.setFeatureState({ source: 'parcels', id: hoveredStateId }, { hover: true });
-            map.current.getCanvas().style.cursor = 'pointer';
           }
         }
       });
@@ -124,7 +116,6 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
           map.current.setFeatureState({ source: 'parcels', id: hoveredStateId }, { hover: false });
         }
         hoveredStateId = null;
-        if (map.current) map.current.getCanvas().style.cursor = 'default';
       });
     });
 
@@ -138,20 +129,11 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
 
   useEffect(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
-
-    const filterArray: any[] = ['all'];
-    filterArray.push(['>=', ['get', 'lot_size'], filters.minAcreage]);
-
-    if (filters.gridViable) {
-      // Since Mapbox flattens JSON props in get, we might need a better way 
-      // or filter on server. For now, let's keep it simple.
-    }
-
-    map.current.setFilter('parcels-fill', filterArray.length > 1 ? filterArray : null);
+    map.current.setFilter('parcels-fill', ['>=', ['get', 'lot_size'], filters.minAcreage]);
   }, [filters]);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full bg-zinc-900">
       <div ref={mapContainer} className="w-full h-full" />
     </div>
   );

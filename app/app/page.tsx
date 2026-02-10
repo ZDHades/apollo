@@ -9,6 +9,7 @@ import { Sun, Filter, Layers, List, MapPin, Zap, Droplets, Ruler, ShieldAlert, X
 export default function Home() {
   const [view, setView] = useState<'map' | 'list'>('map');
   const [selectedParcel, setSelectedParcel] = useState<any>(null);
+  const [loadingParcel, setLoadingParcel] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [parcels, setParcels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +19,7 @@ export default function Home() {
     lowWetland: false,
   });
 
-  // Fetch data
+  // 1. Initial Summary Load (Fast)
   useEffect(() => {
     async function fetchData() {
       try {
@@ -36,6 +37,21 @@ export default function Home() {
     fetchData();
   }, []);
 
+  // 2. Lazy Detail Fetch (Triggered on Select)
+  const handleParcelSelect = async (id: string) => {
+    setLoadingParcel(true);
+    setSelectedParcel(null); // Clear old one immediately
+    try {
+      const res = await fetch(`/api/parcels?id=${id}`);
+      const detail = await res.json();
+      setSelectedParcel(detail);
+    } catch (err) {
+      console.error('Detail fetch error:', err);
+    } finally {
+      setLoadingParcel(false);
+    }
+  };
+
   const resetFilters = () => {
     setFilters({
       minAcreage: 0,
@@ -44,13 +60,7 @@ export default function Home() {
     });
   };
 
-  // UI Filtering for List View
-  const filteredParcels = parcels.filter(p => {
-    if (p.lot_size < filters.minAcreage) return false;
-    if (filters.gridViable && p.grid?.status !== 'VIABLE') return false;
-    if (filters.lowWetland && (p.enviro?.wetlands_overlap_pct || 0) > 0.2) return false;
-    return true;
-  });
+  const filteredParcels = parcels.filter(p => p.lot_size >= filters.minAcreage);
 
   return (
     <div className="flex h-screen w-full bg-zinc-950 overflow-hidden text-zinc-100 font-sans">
@@ -92,56 +102,25 @@ export default function Home() {
                 <span className="text-xs font-mono text-yellow-500">{filters.minAcreage} ac</span>
               </div>
               <input 
-                type="range" 
-                min="0"
-                max="50"
-                step="1"
+                type="range" min="0" max="50" step="1"
                 value={filters.minAcreage}
                 onChange={(e) => setFilters(prev => ({ ...prev, minAcreage: parseInt(e.target.value) }))}
                 className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-yellow-500" 
               />
             </div>
-            
-            <div className="space-y-4 pt-2">
-              <label className="flex items-center justify-between cursor-pointer group">
-                <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">Grid Viable Only</span>
-                <div className="relative inline-flex items-center">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.gridViable}
-                    onChange={(e) => setFilters(prev => ({ ...prev, gridViable: e.target.checked }))}
-                    className="sr-only peer" 
-                  />
-                  <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-500 peer-checked:after:bg-zinc-950"></div>
-                </div>
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer group">
-                <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">Low Wetland Impact</span>
-                <div className="relative inline-flex items-center">
-                  <input 
-                    type="checkbox" 
-                    checked={filters.lowWetland}
-                    onChange={(e) => setFilters(prev => ({ ...prev, lowWetland: e.target.checked }))}
-                    className="sr-only peer" 
-                  />
-                  <div className="w-9 h-5 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-yellow-500 peer-checked:after:bg-zinc-950"></div>
-                </div>
-              </label>
-            </div>
           </div>
         </nav>
 
-        <div className="p-4 border-t border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
-          <div className="text-[10px] text-zinc-500 text-center uppercase tracking-widest mb-2 font-semibold">
-            Status: Development MVP
+        <div className="p-4 border-t border-zinc-800 bg-zinc-900/50 backdrop-blur-md text-center">
+          <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-4 font-semibold">
+            Optimized Engine v2.0
           </div>
           <button 
             onClick={resetFilters}
             className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2"
           >
             <Filter size={16} />
-            Reset All Filters
+            Reset All
           </button>
         </div>
       </aside>
@@ -153,18 +132,18 @@ export default function Home() {
             <div className="flex h-full w-full items-center justify-center bg-zinc-950">
               <div className="flex flex-col items-center gap-4">
                 <Loader2 className="animate-spin text-yellow-500" size={32} />
-                <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Synthesizing Parcel Data...</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Optimizing Geospatial Engine...</span>
               </div>
             </div>
           ) : view === 'map' ? (
-            <Map filters={filters} onParcelSelect={setSelectedParcel} />
+            <Map filters={filters} onParcelSelect={handleParcelSelect} />
           ) : (
-            <ParcelList parcels={filteredParcels} onParcelSelect={setSelectedParcel} />
+            <ParcelList parcels={filteredParcels} onParcelSelect={handleParcelSelect} />
           )}
         </div>
 
-        {/* Details Sidebar (Dynamic) */}
-        {selectedParcel && (
+        {/* Details Sidebar (Lazy Loaded) */}
+        {(selectedParcel || loadingParcel) && (
           <div className="w-96 border-l border-zinc-800 bg-zinc-950 flex flex-col slide-in-right overflow-hidden shadow-2xl relative z-20">
             <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
               <div className="flex items-center gap-2">
@@ -177,123 +156,90 @@ export default function Home() {
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-              {/* Score Header */}
-              <div className="text-center p-6 bg-zinc-900/80 rounded-2xl border border-zinc-800 shadow-inner relative overflow-hidden">
-                <div className="relative z-10">
-                   <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Viability Score</div>
-                   <div className={`text-5xl font-black ${(selectedParcel.score || 0) > 0.7 ? 'text-green-500' : 'text-yellow-500'}`}>
-                    {Math.round((selectedParcel.score || 0) * 100)}%
-                   </div>
-                   <div className="text-xs text-zinc-400 font-medium mt-2 bg-zinc-800 inline-block px-3 py-1 rounded-full border border-zinc-700">
-                    Rank: <span className="text-zinc-100 font-bold uppercase tracking-tight ml-1">{selectedParcel.rank || 'POOR'}</span>
-                   </div>
+              {loadingParcel ? (
+                <div className="h-full flex items-center justify-center">
+                  <Loader2 className="animate-spin text-zinc-700" size={24} />
                 </div>
-                <div className="absolute top-0 right-0 p-4 opacity-5">
-                   <Sun size={120} />
-                </div>
-              </div>
-
-              {/* Header Info */}
-              <div>
-                <div className="flex items-center gap-2 text-yellow-500 mb-1">
-                  <MapPin size={16} />
-                  <span className="text-xs font-bold uppercase tracking-wider">Location</span>
-                </div>
-                <div className="text-xl font-bold">{selectedParcel.address || 'Unknown Address'}</div>
-                <div className="text-xs text-zinc-500 font-mono mt-1 opacity-60">ID: {selectedParcel.id}</div>
-                
-                {/* Satellite Link */}
-                <a 
-                  href={selectedParcel.satellite_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors mt-3"
-                >
-                  <Layers size={14} />
-                  Open in Google Satellite
-                  <ExternalLink size={12} />
-                </a>
-              </div>
-
-              {/* Status Summary */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
-                  <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Grid</div>
-                  <div className={`text-sm font-bold ${selectedParcel.grid?.status === 'VIABLE' ? 'text-green-500' : 'text-red-500'}`}>
-                    {selectedParcel.grid?.status || 'N/A'}
+              ) : selectedParcel && (
+                <>
+                  {/* Score Header */}
+                  <div className="text-center p-6 bg-zinc-900/80 rounded-2xl border border-zinc-800 shadow-inner relative overflow-hidden">
+                    <div className="relative z-10">
+                       <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-widest mb-1">Viability Score</div>
+                       <div className={`text-5xl font-black ${(selectedParcel.score || 0) > 0.7 ? 'text-green-500' : 'text-yellow-500'}`}>
+                        {Math.round((selectedParcel.score || 0) * 100)}%
+                       </div>
+                       <div className="text-xs text-zinc-400 font-medium mt-2 bg-zinc-800 inline-block px-3 py-1 rounded-full border border-zinc-700">
+                        Rank: <span className="text-zinc-100 font-bold uppercase tracking-tight ml-1">{selectedParcel.rank || 'POOR'}</span>
+                       </div>
+                    </div>
                   </div>
-                </div>
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 transition-colors hover:border-zinc-700">
-                  <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Wetlands</div>
-                  <div className={`text-sm font-bold ${selectedParcel.enviro?.status === 'VIABLE' ? 'text-green-500' : 'text-red-500'}`}>
-                    {selectedParcel.enviro?.status || 'N/A'}
+
+                  {/* Header Info */}
+                  <div>
+                    <div className="flex items-center gap-2 text-yellow-500 mb-1">
+                      <MapPin size={16} />
+                      <span className="text-xs font-bold uppercase tracking-wider">Location</span>
+                    </div>
+                    <div className="text-xl font-bold">{selectedParcel.address || 'Unknown Address'}</div>
+                    <div className="text-xs text-zinc-500 font-mono mt-1 opacity-60">ID: {selectedParcel.id}</div>
+                    
+                    <a href={selectedParcel.satellite_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors mt-3">
+                      <Layers size={14} /> Open in Google Satellite <ExternalLink size={12} />
+                    </a>
                   </div>
-                </div>
-              </div>
 
-              {/* Technical Sections */}
-              <section className="space-y-4 bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
-                <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
-                  <Zap size={16} className="text-yellow-500" />
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400">Grid Connectivity</h3>
-                </div>
-                <div className="space-y-3">
-                  <DetailItem label="Utility" value={selectedParcel.grid?.utility} />
-                  <DetailItem label="Circuit ID" value={selectedParcel.grid?.circuit_id} />
-                  <DetailItem label="Capacity" value={selectedParcel.grid?.capacity_mw ? `${selectedParcel.grid.capacity_mw} MW` : 'Unknown'} />
-                  <DetailItem label="Substation" value={selectedParcel.grid?.substation} />
-                </div>
-              </section>
+                  {/* Status Summary */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                      <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Grid</div>
+                      <div className={`text-sm font-bold ${selectedParcel.grid?.status === 'VIABLE' ? 'text-green-500' : 'text-red-500'}`}>{selectedParcel.grid?.status || 'N/A'}</div>
+                    </div>
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                      <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Wetlands</div>
+                      <div className={`text-sm font-bold ${selectedParcel.enviro?.status === 'VIABLE' ? 'text-green-500' : 'text-red-500'}`}>{selectedParcel.enviro?.status || 'N/A'}</div>
+                    </div>
+                  </div>
 
-              <section className="space-y-4 bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
-                <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
-                  <Truck size={16} className="text-blue-400" />
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400">Infrastructure</h3>
-                </div>
-                <div className="space-y-3">
-                  <DetailItem label="Frontage" value={selectedParcel.infra?.frontage_ft ? `${selectedParcel.infra.frontage_ft} ft` : 'N/A'} />
-                  <DetailItem label="Roads" value={selectedParcel.infra?.access_roads?.join(', ') || 'Unknown'} />
-                </div>
-              </section>
+                  <section className="space-y-4 bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+                    <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
+                      <Zap size={16} className="text-yellow-500" />
+                      <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400">Grid Connectivity</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <DetailItem label="Utility" value={selectedParcel.grid?.utility} />
+                      <DetailItem label="Circuit ID" value={selectedParcel.grid?.circuit_id} />
+                      <DetailItem label="Capacity" value={selectedParcel.grid?.capacity_mw ? `${selectedParcel.grid.capacity_mw} MW` : 'Unknown'} />
+                    </div>
+                  </section>
 
-              <section className="space-y-4 bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
-                <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
-                  <Ruler size={16} className="text-purple-500" />
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400">Zoning & Physical</h3>
-                </div>
-                <div className="space-y-3">
-                  <DetailItem label="District" value={selectedParcel.zoning?.zone_code} />
-                  <DetailItem label="Permit Type" value={selectedParcel.zoning?.use_type} />
-                  <DetailItem label="Mean Slope" value={selectedParcel.physical?.mean_slope_pct ? `${selectedParcel.physical.mean_slope_pct}%` : 'N/A'} />
-                  <DetailItem label="Land Cover" value={selectedParcel.physical?.land_cover} />
-                </div>
-              </section>
-
-              <section className="space-y-4 bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
-                <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
-                  <ShieldAlert size={16} className="text-orange-500" />
-                  <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400">Risk Factors</h3>
-                </div>
-                <div className="space-y-3">
-                  <DetailItem label="Owner Type" value={selectedParcel.legal?.owner_type} />
-                  <DetailItem label="Social Risk" value={selectedParcel.legal?.social_risk_score ? `${selectedParcel.legal.social_risk_score}/10` : 'N/A'} />
-                  <DetailItem label="Abutters" value={selectedParcel.legal?.abutter_count_500ft} />
-                </div>
-              </section>
+                  <section className="space-y-4 bg-zinc-900/30 p-4 rounded-xl border border-zinc-800/50">
+                    <div className="flex items-center gap-2 border-b border-zinc-800 pb-2">
+                      <ShieldAlert size={16} className="text-orange-500" />
+                      <h3 className="font-bold text-xs uppercase tracking-widest text-zinc-400">Risk Factors</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <DetailItem label="Owner Type" value={selectedParcel.legal?.owner_type} />
+                      <DetailItem label="Social Risk" value={selectedParcel.legal?.social_risk_score ? `${selectedParcel.legal.social_risk_score}/10` : 'N/A'} />
+                    </div>
+                  </section>
+                </>
+              )}
             </div>
             
-            <div className="p-6 border-t border-zinc-800 bg-zinc-900/50">
-              <button 
-                onClick={() => setShowReport(true)}
-                className="w-full py-3 bg-zinc-100 text-zinc-950 hover:bg-white font-bold rounded-lg transition-all shadow-lg active:scale-[0.98]"
-              >
-                Generate Site Report
-              </button>
-            </div>
+            {!loadingParcel && selectedParcel && (
+              <div className="p-6 border-t border-zinc-800 bg-zinc-900/50">
+                <button 
+                  onClick={() => setShowReport(true)}
+                  className="w-full py-3 bg-zinc-100 text-zinc-950 hover:bg-white font-bold rounded-lg transition-all shadow-lg active:scale-[0.98]"
+                >
+                  Generate Site Report
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Modal Overlay */}
         {showReport && selectedParcel && (
           <SiteReport parcel={selectedParcel} onClose={() => setShowReport(false)} />
         )}

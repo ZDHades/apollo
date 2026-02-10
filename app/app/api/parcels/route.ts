@@ -1,7 +1,45 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+
+  // OPTION A: Fetch details for a specific parcel
+  if (id) {
+    try {
+      const query = `
+        SELECT 
+          "OBJECTID" as id,
+          "SITE_ADDR" as address,
+          "LOT_SIZE" as lot_size,
+          viability_score as score,
+          viability_rank as rank,
+          enviro_status as enviro,
+          grid_status as grid,
+          zoning_status as zoning,
+          physical_status as physical,
+          legal_social_status as legal,
+          infrastructure_status as infra,
+          center_lat as lat,
+          center_lng as lng
+        FROM parcels
+        WHERE "OBJECTID" = $1;
+      `;
+      const result = await pool.query(query, [id]);
+      if (result.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      
+      const parcel = result.rows[0];
+      // Generate satellite URL on the fly
+      parcel.satellite_url = `https://www.google.com/maps/@${parcel.lat},${parcel.lng},400m/data=!3m1!1e3`;
+      
+      return NextResponse.json(parcel);
+    } catch (error) {
+      return NextResponse.json({ error: 'Failed to fetch details' }, { status: 500 });
+    }
+  }
+
+  // OPTION B: Fetch summary list for Map/List View (Optimized Payload)
   try {
     const query = `
       SELECT 
@@ -10,15 +48,9 @@ export async function GET() {
         "LOT_SIZE",
         viability_score,
         viability_rank,
-        enviro_status,
-        grid_status,
-        zoning_status,
-        physical_status,
-        legal_social_status,
-        infrastructure_status,
-        ST_AsGeoJSON(geometry)::json as geometry,
-        ST_Y(ST_Centroid(ST_Transform(geometry, 4326))) as lat,
-        ST_X(ST_Centroid(ST_Transform(geometry, 4326))) as lng
+        center_lat,
+        center_lng,
+        ST_AsGeoJSON(ST_SimplifyPreserveTopology(geometry, 0.0001))::json as geometry
       FROM parcels
       WHERE geometry IS NOT NULL
       ORDER BY viability_score DESC
@@ -39,15 +71,8 @@ export async function GET() {
           lot_size: row.LOT_SIZE,
           score: row.viability_score,
           rank: row.viability_rank,
-          enviro: row.enviro_status,
-          grid: row.grid_status,
-          zoning: row.zoning_status,
-          physical: row.physical_status,
-          legal: row.legal_social_status,
-          infra: row.infrastructure_status,
-          lat: row.lat,
-          lng: row.lng,
-          satellite_url: `https://www.google.com/maps/@${row.lat},${row.lng},400m/data=!3m1!1e3`,
+          lat: row.center_lat,
+          lng: row.center_lng
         },
       })),
     };
