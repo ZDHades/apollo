@@ -46,14 +46,19 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
 
 ## Phase 6: Production Polish
 *   [ ] **Step 6.1: UI Polish**
-    *   [ ] Connect map to PostGIS API.
-    *   [ ] Implement "Viability Heatmap" layer.
-    *   [ ] Add parcel detail modal (showing all JSONB status blocks).
-*   [ ] **Step 6.2: Automation**
+    *   [x] Connect map to PostGIS API.
+    *   [x] Implement "Viability Heatmap" layer (Gradient Red to Green).
+    *   [x] Add high-fidelity parcel intel sidebar (showing all status blocks).
+    *   [x] Wired up sidebar selection logic and hover states.
+*   [x] **Step 6.2: Scoring Engine**
+    *   [x] Created `pipelines/scoring_engine.py`.
+    *   [x] Implemented multi-factor weighting (Grid, Enviro, Zoning, Risk).
+    *   [x] Populated `viability_score` and `viability_rank` for all parcels.
 
 ---
 
 ## Log
+*   **2026-02-10**: Implemented composite Scoring Engine. Redesigned UI with high-fidelity Parcel Intel sidebar, selection highlighting, and viability heatmap (Red-to-Green gradient). Wired up dynamic filters. 
 *   **2026-02-10**: Connected UI to PostGIS API. Implemented logic for Grid, Zoning, Physical, and Legal pipelines. Successfully populated database for Amherst, MA. Fixed `.env.local` path issue.
 *   **2026-02-09**: Initialized `update-tracker.md`.
 *   **2026-02-08**: Created core documentation (`WORKPLAN.md`, `SOUL.md`, `REQUIREMENTS.md`) and pipeline specs. Created `docker-compose.yml` and `requirements.txt`.
