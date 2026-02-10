@@ -41,7 +41,8 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
 
 ## Phase 5: Legal & Social (Risk Adjustment)
 *   [x] **Step 5.1: Legal & Social (Pipeline 06)**
-    *   [x] Research ownership and open space datasets (PROS layer available).
+    *   [x] Research ownership and open space datasets (EEA PROS layer).
+    *   [x] Ingested real Protected Open Space boundaries to identify deal-killers.
     *   [x] Implement risk scoring logic. (Populated `legal_social_status` JSONB).
 
 ## Phase 6: Production Polish
