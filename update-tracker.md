@@ -16,10 +16,16 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
 *   [x] **Step 1.1: Environmental Constraints (Pipeline 03)**
     *   [x] Ingest Wetlands. (Implemented with dummy data for MVP; API endpoint requires further auth investigation).
     *   [x] Compute Intersection & Usable Area. (Logic verified and DB updated).
-*   [ ] **Step 1.2: Grid Interconnection (Pipeline 01)**
+*   [x] **Step 1.2: Grid Interconnection (Pipeline 01)**
+    *   [x] Ingest National Grid data. (Script created: `pipelines/01_grid/ingest.py`).
+    *   [x] Associate grid data with parcels.
 
 ## Phase 2: Visualization MVP (The "See It" Milestone)
 *   [ ] **Step 2.1: Basic Dashboard**
+    *   [x] Install Mapbox & UI dependencies.
+    *   [x] Create Map component.
+    *   [x] Create Sidebar layout.
+    *   [ ] Connect map to PostGIS API.
 
 ## Phase 3: Regulatory (The "Hard" Filter)
 *   [ ] **Step 3.1: Zoning & Bylaws (Pipeline 02)**
