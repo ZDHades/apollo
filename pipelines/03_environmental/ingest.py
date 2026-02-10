@@ -7,7 +7,7 @@ from geoalchemy2 import Geometry
 
 # Configuration
 # MassDEP Wetlands FeatureServer (Areas)
-WETLANDS_URL = "https://services1.arcgis.com/hGdibHYSPO59RG1h/arcgis/rest/services/Hydrography_1_25000/FeatureServer/0/query"
+WETLANDS_URL = "https://services1.arcgis.com/hGdibHYSPO59RG1h/arcgis/rest/services/MassDEP_Wetlands/FeatureServer/0/query"
 DB_URL = os.getenv("DATABASE_URL", "postgresql://apollo:solar_password@localhost:5432/apollo")
 
 def get_town_bbox(engine):
@@ -15,8 +15,8 @@ def get_town_bbox(engine):
     Get the bounding box of the town from existing parcels.
     """
     query = text("""
-        SELECT ST_XMin(ST_Extent(geometry)), ST_YMin(ST_Extent(geometry)), 
-               ST_XMax(ST_Extent(geometry)), ST_YMax(ST_Extent(geometry))
+        SELECT ST_XMin(ST_Extent(ST_Transform(geometry, 4326))), ST_YMin(ST_Extent(ST_Transform(geometry, 4326))), 
+               ST_XMax(ST_Extent(ST_Transform(geometry, 4326))), ST_YMax(ST_Extent(ST_Transform(geometry, 4326)))
         FROM parcels
     """)
     with engine.connect() as conn:
@@ -59,7 +59,7 @@ def fetch_wetlands(bbox):
         return data
     except Exception as e:
         print(f"Failed to fetch wetlands: {e}")
-        print("Using dummy wetland data for MVP verification...")
+        print("Using SMALL dummy wetland data for MVP verification...")
         return {
             "type": "FeatureCollection",
             "features": [
@@ -69,11 +69,11 @@ def fetch_wetlands(bbox):
                     "geometry": {
                         "type": "Polygon",
                         "coordinates": [[
-                            [-72.53, 42.36],
-                            [-72.51, 42.36],
-                            [-72.51, 42.38],
-                            [-72.53, 42.38],
-                            [-72.53, 42.36]
+                            [-72.525, 42.370],
+                            [-72.523, 42.370],
+                            [-72.523, 42.372],
+                            [-72.525, 42.372],
+                            [-72.525, 42.370]
                         ]]
                     }
                 }
@@ -96,8 +96,8 @@ def process_constraints():
 
     # 2. Fetch Wetlands
     wetlands_data = fetch_wetlands(bbox)
-    if not wetlands_data or not wetlands_data['features']:
-        print("No wetlands found.")
+    if not wetlands_data:
+        print("No wetlands data available.")
         return
 
     # 3. Process Wetlands (Buffer 100ft)
@@ -124,10 +124,6 @@ def process_constraints():
     
     # 5. Calculate Intersection
     print("Calculating intersections...")
-    # This can be slow. For MVP, we iterate. 
-    # In production, do this in PostGIS with SQL.
-    
-    results = []
     
     for idx, parcel in parcels_gdf.iterrows():
         total_area = parcel.geometry.area
@@ -137,18 +133,14 @@ def process_constraints():
         usable_area = total_area - excluded_area
         usable_pct = usable_area / total_area if total_area > 0 else 0
         
-        status = "VIABLE" if usable_pct > 0.5 else "NON_VIABLE"
+        status = "VIABLE" if usable_pct > 0.8 else "REVIEW" if usable_pct > 0.5 else "NON_VIABLE"
         
         enviro_status = {
-            "wetlands_overlap_pct": round(1.0 - usable_pct, 2),
+            "wetlands_overlap_pct": round(1.0 - usable_pct, 4),
             "usable_area_sqm": round(usable_area, 2),
             "status": status,
-            "flags": ["WETLANDS"] if usable_pct < 0.5 else []
+            "flags": ["WETLANDS"] if usable_pct < 0.8 else []
         }
-        
-        # Update DB (Inefficient row-by-row for MVP, but fine for 2000 rows)
-        # We need a unique ID. Assuming 'LOC_ID' or 'OBJECTID' is unique.
-        # Let's use OBJECTID from the dataframe.
         
         # Construct update query
         update_stmt = text("""

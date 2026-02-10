@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Map from '../components/Map';
 import ParcelList from '../components/ParcelList';
+import SiteReport from '../components/SiteReport';
 import { Sun, Filter, Layers, List, MapPin, Zap, Droplets, Ruler, ShieldAlert, X, Truck, BarChart3, Loader2 } from 'lucide-react';
 
 export default function Home() {
   const [view, setView] = useState<'map' | 'list'>('map');
   const [selectedParcel, setSelectedParcel] = useState<any>(null);
+  const [showReport, setShowReport] = useState(false);
   const [parcels, setParcels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -269,11 +271,19 @@ export default function Home() {
             </div>
             
             <div className="p-6 border-t border-zinc-800 bg-zinc-900/50">
-              <button className="w-full py-3 bg-zinc-100 text-zinc-950 hover:bg-white font-bold rounded-lg transition-all shadow-lg active:scale-[0.98]">
+              <button 
+                onClick={() => setShowReport(true)}
+                className="w-full py-3 bg-zinc-100 text-zinc-950 hover:bg-white font-bold rounded-lg transition-all shadow-lg active:scale-[0.98]"
+              >
                 Generate Site Report
               </button>
             </div>
           </div>
+        )}
+
+        {/* Modal Overlay */}
+        {showReport && selectedParcel && (
+          <SiteReport parcel={selectedParcel} onClose={() => setShowReport(false)} />
         )}
       </main>
     </div>
