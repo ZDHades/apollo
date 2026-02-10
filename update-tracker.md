@@ -35,6 +35,8 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
 
 ## Phase 4: Constructability & Cost (Refinement)
 *   [ ] **Step 4.1: Physical/Topography (Pipeline 04)**
+    *   [x] Research LiDAR availability (1m DEM available from MassGIS).
+    *   [x] Implement constructability logic. (Populated `physical_status` JSONB).
 *   [ ] **Step 4.2: Infrastructure (Pipeline 05)**
 
 ## Phase 5: Legal & Social (Risk Adjustment)
