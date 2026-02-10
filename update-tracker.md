@@ -46,6 +46,9 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
 
 ## Phase 6: Production Polish
 *   [ ] **Step 6.1: UI Polish**
+    *   [ ] Connect map to PostGIS API.
+    *   [ ] Implement "Viability Heatmap" layer.
+    *   [ ] Add parcel detail modal (showing all JSONB status blocks).
 *   [ ] **Step 6.2: Automation**
 
 ---
