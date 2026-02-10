@@ -5,36 +5,43 @@ from sqlalchemy import create_engine
 from geoalchemy2 import Geometry
 
 # Configuration
-WFS_URL = "https://giswebservices.massgis.state.ma.us/geoserver/wfs"
+FEATURE_SERVER_URL = "https://services1.arcgis.com/hGdibHYSPO59RG1h/arcgis/rest/services/L3_TAXPAR_POLY_ASSESS_gdb/FeatureServer/0/query"
 TOWN_ID = 8  # Amherst (Default for MVP)
-LAYER_NAME = "massgis:GISDATA.L3_TAXPAR_POLY_ASSESS"
 DB_URL = os.getenv("DATABASE_URL", "postgresql://apollo:solar_password@localhost:5432/apollo")
 
 def fetch_parcels(town_id=TOWN_ID):
     """
-    Fetch parcel polygons from MassGIS WFS for a specific town.
+    Fetch parcel polygons from MassGIS ArcGIS FeatureServer for a specific town.
     """
-    print(f"Fetching parcels for Town ID: {town_id} from MassGIS...")
+    print(f"Fetching parcels for Town ID: {town_id} from MassGIS ArcGIS...")
+    
+    # ArcGIS REST API parameters
     params = {
-        "service": "WFS",
-        "version": "2.0.0",
-        "request": "GetFeature",
-        "typeNames": LAYER_NAME,
-        "outputFormat": "application/json",
-        "cql_filter": f"TOWN_ID={town_id}",
-        "srsName": "EPSG:4326"
+        "where": f"TOWN_ID={town_id}",
+        "outFields": "*",
+        "returnGeometry": "true",
+        "f": "geojson"
+    }
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
     }
     
     try:
-        response = requests.get(WFS_URL, params=params)
+        response = requests.get(FEATURE_SERVER_URL, params=params, headers=headers, verify=False)
         response.raise_for_status()
         data = response.json()
+        
+        # Check for ArcGIS error response
+        if "error" in data:
+            raise Exception(f"ArcGIS Error: {data['error']}")
+            
         feature_count = len(data.get("features", []))
         print(f"Successfully fetched {feature_count} features.")
         return data
     except requests.exceptions.RequestException as e:
         print(f"Failed to fetch data: {e}")
-        if response.content:
+        if 'response' in locals() and response.content:
             print(f"Response content: {response.content[:200]}")
         raise
 

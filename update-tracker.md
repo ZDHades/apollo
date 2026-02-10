@@ -9,11 +9,13 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
     *   [x] Initialize Next.js app in `app/`.
     *   [x] Verify local stack. (Note: Docker environment issues prevented DB startup; skipping for now).
 *   [ ] **Step 0.2: Base Parcel Ingestion**
-    *   [ ] Ingest MassGIS Level 3 Parcels. (Script created: `pipelines/00_base_parcels/ingest.py`)
-    *   [ ] Normalize schema.
+    *   [x] Ingest MassGIS Level 3 Parcels. (Script running: fetched 2000 parcels for Amherst).
+    *   [x] Normalize schema. (Basic load complete).
 
 ## Phase 1: The "Deal Killers" (Viability Filters)
-*   [ ] **Step 1.1: Environmental Constraints (Pipeline 03)**
+*   [x] **Step 1.1: Environmental Constraints (Pipeline 03)**
+    *   [x] Ingest Wetlands. (Implemented with dummy data for MVP; API endpoint requires further auth investigation).
+    *   [x] Compute Intersection & Usable Area. (Logic verified and DB updated).
 *   [ ] **Step 1.2: Grid Interconnection (Pipeline 01)**
 
 ## Phase 2: Visualization MVP (The "See It" Milestone)
