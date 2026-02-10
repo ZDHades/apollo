@@ -8,7 +8,7 @@ def calculate_viability():
     print("Connecting to database...")
     engine = create_engine(DB_URL)
     
-    # 0. Ensure 'viability_score' column exists
+    # Ensure columns exist
     with engine.begin() as conn:
         conn.execute(text("ALTER TABLE parcels ADD COLUMN IF NOT EXISTS viability_score FLOAT DEFAULT 0.0;"))
         conn.execute(text("ALTER TABLE parcels ADD COLUMN IF NOT EXISTS viability_rank TEXT;"))
@@ -16,7 +16,7 @@ def calculate_viability():
     print("Fetching enriched parcels for scoring...")
     with engine.connect() as conn:
         parcels = conn.execute(text("""
-            SELECT "OBJECTID", enviro_status, grid_status, zoning_status, physical_status, legal_social_status 
+            SELECT "OBJECTID", enviro_status, grid_status, zoning_status, physical_status, legal_social_status, infrastructure_status 
             FROM parcels
         """)).fetchall()
         
@@ -24,11 +24,10 @@ def calculate_viability():
     
     with engine.begin() as conn:
         for p in parcels:
-            oid, enviro, grid, zoning, physical, legal = p
+            oid, enviro, grid, zoning, physical, legal, infra = p
             
             score = 50.0 # Baseline
-            flags = []
-
+            
             # 1. Grid (Max +30, Min -100)
             if grid:
                 if grid.get("status") == "VIABLE":
@@ -36,14 +35,12 @@ def calculate_viability():
                     if grid.get("capacity_mw", 0) > 2.0: score += 10
                 elif grid.get("status") == "CONGESTED":
                     score -= 80
-                    flags.append("CONGESTED_GRID")
             
             # 2. Environmental (Deal Killer)
             if enviro:
                 overlap = enviro.get("wetlands_overlap_pct", 1.0)
                 if overlap > 0.4:
                     score -= 100
-                    flags.append("HIGH_WETLAND_IMPACT")
                 elif overlap < 0.1:
                     score += 20
             
@@ -53,10 +50,8 @@ def calculate_viability():
                     score += 20
                 elif zoning.get("use_type") == "PROHIBITED":
                     score -= 100
-                    flags.append("ZONING_PROHIBITED")
-                
                 if zoning.get("status") == "NON_VIABLE":
-                    score -= 50 # likely lot size issue
+                    score -= 50
             
             # 4. Physical (Max +15)
             if physical:
@@ -64,15 +59,21 @@ def calculate_viability():
                 if slope < 5.0: score += 15
                 elif slope > 15.0: 
                     score -= 60
-                    flags.append("STEEP_SLOPE")
             
-            # 5. Legal/Social (Max +10)
+            # 5. Legal/Social (Max +15)
             if legal:
                 if legal.get("owner_type") == "MUNICIPAL":
                     score += 15
                 risk = legal.get("social_risk_score", 10.0)
                 if risk < 3.0: score += 5
                 elif risk > 7.0: score -= 20
+            
+            # 6. Infrastructure (Max +15)
+            if infra:
+                if infra.get("status") == "VIABLE":
+                    score += 10
+                if infra.get("frontage_ft", 0) > 50:
+                    score += 5
 
             # Normalize 0-100
             final_score = max(0, min(100, score)) / 100.0

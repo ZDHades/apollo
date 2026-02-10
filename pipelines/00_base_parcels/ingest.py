@@ -1,15 +1,16 @@
 import os
 import requests
 import geopandas as gpd
+import argparse
 from sqlalchemy import create_engine
 from geoalchemy2 import Geometry
 
 # Configuration
 FEATURE_SERVER_URL = "https://services1.arcgis.com/hGdibHYSPO59RG1h/arcgis/rest/services/L3_TAXPAR_POLY_ASSESS_gdb/FeatureServer/0/query"
-TOWN_ID = 8  # Amherst (Default for MVP)
+DEFAULT_TOWN_ID = 8  # Amherst
 DB_URL = os.getenv("DATABASE_URL", "postgresql://apollo:solar_password@localhost:5432/apollo")
 
-def fetch_parcels(town_id=TOWN_ID):
+def fetch_parcels(town_id=DEFAULT_TOWN_ID):
     """
     Fetch parcel polygons from MassGIS ArcGIS FeatureServer for a specific town.
     """
@@ -24,7 +25,7 @@ def fetch_parcels(town_id=TOWN_ID):
     }
     
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Apollo Solar Bot)"
     }
     
     try:
@@ -32,7 +33,6 @@ def fetch_parcels(town_id=TOWN_ID):
         response.raise_for_status()
         data = response.json()
         
-        # Check for ArcGIS error response
         if "error" in data:
             raise Exception(f"ArcGIS Error: {data['error']}")
             
@@ -41,52 +41,51 @@ def fetch_parcels(town_id=TOWN_ID):
         return data
     except requests.exceptions.RequestException as e:
         print(f"Failed to fetch data: {e}")
-        if 'response' in locals() and response.content:
-            print(f"Response content: {response.content[:200]}")
         raise
 
-def load_to_db(geojson_data):
+def load_to_db(geojson_data, append=False):
     """
     Load GeoJSON data into PostGIS 'parcels' table.
     """
+    if not geojson_data or not geojson_data.get("features"):
+        return
+        
     print("Processing GeoJSON into GeoDataFrame...")
     gdf = gpd.GeoDataFrame.from_features(geojson_data["features"])
     
-    # Ensure CRS is set to EPSG:4326
     if gdf.crs is None:
         gdf.set_crs(epsg=4326, inplace=True)
     
-    print(f"GeoDataFrame loaded. Shape: {gdf.shape}")
-    print("Columns:", gdf.columns.tolist())
+    # Standardize geometry to MULTIPOLYGON
+    gdf['geometry'] = [g if g.geom_type == 'MultiPolygon' else gpd.GeoSeries([g]).iloc[0] for g in gdf.geometry]
     
-    # Basic Schema Normalization (MVP)
-    # MassGIS fields: PROP_ID, LOC_ID, TOWN_ID, MAP_PAR_ID, etc.
-    # We might want to rename some for clarity, but keeping raw is safer for now.
-    
-    print(f"Connecting to database: {DB_URL}")
     engine = create_engine(DB_URL)
     
     try:
-        # Write to PostGIS
-        # using 'replace' to ensure clean slate for dev
+        # Use 'append' if we want to add multiple towns
+        mode = "append" if append else "replace"
+        print(f"Loading to database (mode={mode})...")
+        
         gdf.to_postgis(
             "parcels", 
             engine, 
-            if_exists="replace", 
+            if_exists=mode, 
             index=False, 
-            dtype={'geometry': Geometry('MULTIPOLYGON', srid=4326)}
+            dtype={'geometry': Geometry('GEOMETRY', srid=4326)}
         )
-        print("Successfully loaded 'parcels' table into PostGIS.")
+        print(f"Successfully loaded parcels into PostGIS.")
     except Exception as e:
         print(f"Database error: {e}")
         raise
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--town", type=int, default=DEFAULT_TOWN_ID)
+    parser.add_argument("--append", action="store_true")
+    args = parser.parse_args()
+    
     try:
-        data = fetch_parcels()
-        if data and data.get("features"):
-            load_to_db(data)
-        else:
-            print("No features found.")
+        data = fetch_parcels(args.town)
+        load_to_db(data, args.append)
     except Exception as e:
         print(f"Pipeline failed: {e}")

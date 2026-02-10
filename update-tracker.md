@@ -50,10 +50,18 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
     *   [x] Implement "Viability Heatmap" layer (Gradient Red to Green).
     *   [x] Add high-fidelity parcel intel sidebar (showing all status blocks).
     *   [x] Wired up sidebar selection logic and hover states.
+    *   [x] Implement live **Parcel List view** with real-time filtering.
 *   [x] **Step 6.2: Scoring Engine**
     *   [x] Created `pipelines/scoring_engine.py`.
-    *   [x] Implemented multi-factor weighting (Grid, Enviro, Zoning, Risk).
+    *   [x] Implemented multi-factor weighting (Grid, Enviro, Zoning, Risk, Infra).
     *   [x] Populated `viability_score` and `viability_rank` for all parcels.
+
+## Phase 7: Automation & Scaling
+*   [ ] **Step 7.1: Master Orchestration**
+    *   [x] Created `pipelines/orchestrator.py` to run full town enrichment chain.
+    *   [x] Modified base ingestion to support multi-town appending.
+*   [ ] **Step 7.2: County Scale**
+    *   [x] Ingested Hadley, MA (ID 117) to verify scaling logic.
 
 ---
 

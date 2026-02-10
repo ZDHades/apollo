@@ -30,7 +30,7 @@ def fetch_roads(bbox):
         "spatialRel": "esriSpatialRelIntersects",
         "inSR": "4326",
         "outSR": "4326",
-        "outFields": "STREET_NAME,ROUTE_TYPE,FUNCTIONAL_CLASS",
+        "outFields": "St_Name,Surface_Tp,F_F_Class",
         "returnGeometry": "true",
         "f": "json"
     }
@@ -95,8 +95,7 @@ def process_infrastructure():
     roads_gdf = normalize_roads(roads_raw)
     
     if roads_gdf is None:
-        print("No roads fetched. Using fallback mock for MVP.")
-        # Fallback logic omitted for brevity, will just exit or use a simple line
+        print("No roads fetched. Exiting.")
         return
 
     print("Associating infrastructure data with parcels...")
@@ -106,27 +105,22 @@ def process_infrastructure():
     parcels_ma = parcels_gdf.to_crs(epsg=26986)
     roads_ma = roads_gdf.to_crs(epsg=26986)
     
-    # Buffer roads by 20m to find frontage
-    roads_buffered = roads_ma.copy()
-    roads_buffered["geometry"] = roads_buffered.geometry.buffer(20)
-    
     print("Calculating frontage...")
-    # This is an approximation: find length of parcel boundary intersecting the road buffer
     for idx, parcel in parcels_ma.iterrows():
-        # Find intersecting roads
-        possible_roads = roads_ma[roads_ma.intersects(parcel.geometry.buffer(20))]
+        # Find intersecting roads (buffer road slightly to ensure overlap)
+        possible_roads = roads_ma[roads_ma.intersects(parcel.geometry.buffer(10))]
         
         frontage_ft = 0
         road_names = []
         
         if not possible_roads.empty:
-            # For each road, calculate length of intersection between parcel exterior and road line
-            exterior = parcel.geometry.exterior
+            boundary = parcel.geometry.boundary
             for _, road in possible_roads.iterrows():
-                intersect = exterior.intersection(road.geometry.buffer(5)) # small buffer on road to catch digitized lines
-                frontage_ft += intersect.length * 3.28084 # meters to feet
-                if road["STREET_NAME"]:
-                    road_names.append(road["STREET_NAME"])
+                # Intersect parcel boundary with buffered road line
+                intersect = boundary.intersection(road.geometry.buffer(5))
+                frontage_ft += intersect.length * 3.28084
+                if road["St_Name"]:
+                    road_names.append(road["St_Name"])
         
         infra_data = {
             "frontage_ft": round(frontage_ft, 1),

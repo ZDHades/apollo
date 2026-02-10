@@ -1,17 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Map from '../components/Map';
-import { Sun, Filter, Layers, List, MapPin, Zap, Droplets, Ruler, ShieldAlert, X, Truck, BarChart3 } from 'lucide-react';
+import ParcelList from '../components/ParcelList';
+import { Sun, Filter, Layers, List, MapPin, Zap, Droplets, Ruler, ShieldAlert, X, Truck, BarChart3, Loader2 } from 'lucide-react';
 
 export default function Home() {
   const [view, setView] = useState<'map' | 'list'>('map');
   const [selectedParcel, setSelectedParcel] = useState<any>(null);
+  const [parcels, setParcels] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     minAcreage: 0,
     gridViable: false,
     lowWetland: false,
   });
+
+  // Fetch data
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const res = await fetch('/api/parcels');
+        const data = await res.json();
+        if (data.features) {
+          setParcels(data.features.map((f: any) => f.properties));
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   const resetFilters = () => {
     setFilters({
@@ -20,6 +41,14 @@ export default function Home() {
       lowWetland: false,
     });
   };
+
+  // UI Filtering for List View
+  const filteredParcels = parcels.filter(p => {
+    if (p.lot_size < filters.minAcreage) return false;
+    if (filters.gridViable && p.grid?.status !== 'VIABLE') return false;
+    if (filters.lowWetland && (p.enviro?.wetlands_overlap_pct || 0) > 0.2) return false;
+    return true;
+  });
 
   return (
     <div className="flex h-screen w-full bg-zinc-950 overflow-hidden text-zinc-100 font-sans">
@@ -117,20 +146,18 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="flex-1 relative flex">
-        <div className="flex-1 relative">
-          {view === 'map' ? (
-            <Map filters={filters} onParcelSelect={setSelectedParcel} />
-          ) : (
-            <div className="p-8 max-w-4xl mx-auto h-full overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-6">Viable Parcel List</h2>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden shadow-2xl">
-                <div className="p-12 text-center text-zinc-500">
-                  <List size={48} className="mx-auto mb-4 opacity-20" />
-                  <p>Parcel list view is under construction.</p>
-                  <p className="text-sm mt-2">Switch back to Map View to explore current data.</p>
-                </div>
+        <div className="flex-1 relative overflow-hidden">
+          {loading ? (
+            <div className="flex h-full w-full items-center justify-center bg-zinc-950">
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="animate-spin text-yellow-500" size={32} />
+                <span className="text-xs font-bold uppercase tracking-widest text-zinc-500">Synthesizing Parcel Data...</span>
               </div>
             </div>
+          ) : view === 'map' ? (
+            <Map filters={filters} onParcelSelect={setSelectedParcel} />
+          ) : (
+            <ParcelList parcels={filteredParcels} onParcelSelect={setSelectedParcel} />
           )}
         </div>
 
