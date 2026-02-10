@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Map from '../components/Map';
 import ParcelList from '../components/ParcelList';
 import SiteReport from '../components/SiteReport';
-import { Sun, Filter, Layers, List, MapPin, Zap, Droplets, Ruler, ShieldAlert, X, Truck, BarChart3, Loader2 } from 'lucide-react';
+import { Sun, Filter, Layers, List, MapPin, Zap, Droplets, Ruler, ShieldAlert, X, Truck, BarChart3, Loader2, ExternalLink } from 'lucide-react';
 
 export default function Home() {
   const [view, setView] = useState<'map' | 'list'>('map');
@@ -201,6 +201,18 @@ export default function Home() {
                 </div>
                 <div className="text-xl font-bold">{selectedParcel.address || 'Unknown Address'}</div>
                 <div className="text-xs text-zinc-500 font-mono mt-1 opacity-60">ID: {selectedParcel.id}</div>
+                
+                {/* Satellite Link */}
+                <a 
+                  href={selectedParcel.satellite_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors mt-3"
+                >
+                  <Layers size={14} />
+                  Open in Google Satellite
+                  <ExternalLink size={12} />
+                </a>
               </div>
 
               {/* Status Summary */}

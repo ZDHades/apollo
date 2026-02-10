@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { FileText, MapPin, Zap, Droplets, Ruler, ShieldAlert, Truck, BarChart3, Download } from 'lucide-react';
+import { FileText, MapPin, Zap, Droplets, Ruler, ShieldAlert, Truck, BarChart3, Download, ExternalLink, Sun, X } from 'lucide-react';
 
 interface SiteReportProps {
   parcel: any;
@@ -11,14 +11,6 @@ interface SiteReportProps {
 const SiteReport = ({ parcel, onClose }: SiteReportProps) => {
   const printReport = () => {
     window.print();
-  };
-
-  const getViabilityColor = (status: string) => {
-    return status === 'VIABLE' || status === 'BY_RIGHT' || status === 'HIGH_POTENTIAL' 
-      ? 'text-green-500' 
-      : status === 'REVIEW' || status === 'SPECIAL_PERMIT' 
-      ? 'text-yellow-500' 
-      : 'text-red-500';
   };
 
   return (
@@ -33,6 +25,16 @@ const SiteReport = ({ parcel, onClose }: SiteReportProps) => {
             </div>
             <h1 className="text-4xl font-black tracking-tight">{parcel.address || 'Unnamed Parcel'}</h1>
             <p className="text-zinc-500 mt-2 font-mono text-sm uppercase">Record ID: {parcel.id} • Generated: {new Date().toLocaleDateString()}</p>
+            
+            <a 
+              href={parcel.satellite_url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors mt-4 print:hidden"
+            >
+              <ExternalLink size={14} />
+              View on Google Maps Satellite
+            </a>
           </div>
           <div className="flex gap-3 print:hidden">
             <button 
@@ -69,6 +71,7 @@ const SiteReport = ({ parcel, onClose }: SiteReportProps) => {
               <h3 className="font-bold text-sm uppercase tracking-wider text-zinc-500 px-2">Key Metrics</h3>
               <div className="grid grid-cols-1 gap-2">
                 <MetricBox label="Lot Size" value={`${parcel.lot_size} ac`} icon={<Ruler size={16}/>} />
+                <MetricBox label="Solar Irr." value="4.2 kWh/m²/d" icon={<Sun size={16}/>} />
                 <MetricBox label="Grid Cap" value={`${parcel.grid?.capacity_mw || 0} MW`} icon={<Zap size={16}/>} />
                 <MetricBox label="Wetlands" value={`${((parcel.enviro?.wetlands_overlap_pct || 0) * 100).toFixed(1)}%`} icon={<Droplets size={16}/>} />
               </div>
@@ -166,12 +169,6 @@ function AnalysisItem({ title, status, desc }: { title: string, status: string, 
       </div>
       <p className="text-xs text-zinc-400 leading-relaxed">{desc}</p>
     </div>
-  );
-}
-
-function X({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
   );
 }
 

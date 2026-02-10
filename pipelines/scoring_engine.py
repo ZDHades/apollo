@@ -25,34 +25,32 @@ def calculate_viability():
         for p in parcels:
             oid, enviro, grid, zoning, physical, legal, infra = p
             
-            # Baseline 70 ensures most parcels stay visible in the 'Amber' range 
-            # unless they hit multiple deal-killers.
+            # Baseline 70
             score = 70.0 
             
-            # 1. ZONING (Largest Friction)
+            # 1. ZONING
             if zoning:
                 if zoning.get("use_type") == "BY_RIGHT":
                     score += 20 
                 elif zoning.get("use_type") == "PROHIBITED":
-                    score -= 50 # Significant but not an instant zero
-                
+                    score -= 50 
                 if zoning.get("status") == "NON_VIABLE":
-                    score -= 15 # Size constraint
+                    score -= 15
             
             # 2. SOCIAL/OWNER
             if legal:
                 if legal.get("owner_type") == "MUNICIPAL":
                     score += 15 
                 if legal.get("conservation_restriction"):
-                    score -= 70 # High friction
+                    score -= 70
             
             # 3. ENVIRONMENTAL
             if enviro:
                 overlap = enviro.get("wetlands_overlap_pct", 0.0)
                 if overlap > 0.1:
-                    score -= (overlap * 100) # Dynamic penalty
+                    score -= (overlap * 100)
                 if overlap > 0.4:
-                    score -= 30 # Extra heavy penalty for deal-breaker levels
+                    score -= 30
             
             # 4. GRID
             if grid:
@@ -63,6 +61,11 @@ def calculate_viability():
             if infra:
                 if infra.get("status") == "VIABLE":
                     score += 5
+
+            # 6. SOLAR POTENTIAL (New)
+            # Placeholder for Irradiance. MA average is ~4.2 kWh/m2/day.
+            irradiance = 4.2 
+            score += 5 # Uniform bonus for being in MA
 
             final_score = max(0, min(100, score)) / 100.0
             

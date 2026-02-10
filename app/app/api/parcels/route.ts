@@ -16,7 +16,9 @@ export async function GET() {
         physical_status,
         legal_social_status,
         infrastructure_status,
-        ST_AsGeoJSON(geometry)::json as geometry
+        ST_AsGeoJSON(geometry)::json as geometry,
+        ST_Y(ST_Centroid(ST_Transform(geometry, 4326))) as lat,
+        ST_X(ST_Centroid(ST_Transform(geometry, 4326))) as lng
       FROM parcels
       WHERE geometry IS NOT NULL
       ORDER BY viability_score DESC
@@ -43,6 +45,9 @@ export async function GET() {
           physical: row.physical_status,
           legal: row.legal_social_status,
           infra: row.infrastructure_status,
+          lat: row.lat,
+          lng: row.lng,
+          satellite_url: `https://www.google.com/maps/@${row.lat},${row.lng},400m/data=!3m1!1e3`,
         },
       })),
     };
