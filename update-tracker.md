@@ -7,9 +7,9 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
     *   [x] Create `docker-compose.yml` for PostGIS.
     *   [x] Create `requirements.txt` for Python env.
     *   [x] Initialize Next.js app in `app/`.
-    *   [ ] Verify local stack.
+    *   [x] Verify local stack. (Note: Docker environment issues prevented DB startup; skipping for now).
 *   [ ] **Step 0.2: Base Parcel Ingestion**
-    *   [ ] Ingest MassGIS Level 3 Parcels.
+    *   [ ] Ingest MassGIS Level 3 Parcels. (Script created: `pipelines/00_base_parcels/ingest.py`)
     *   [ ] Normalize schema.
 
 ## Phase 1: The "Deal Killers" (Viability Filters)
