@@ -20,7 +20,7 @@ export async function GET() {
       FROM parcels
       WHERE geometry IS NOT NULL
       ORDER BY viability_score DESC
-      LIMIT 1000;
+      LIMIT 5000;
     `;
 
     const result = await pool.query(query);
