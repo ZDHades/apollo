@@ -6,11 +6,12 @@ export async function GET(request: Request) {
   const id = searchParams.get('id');
 
   // OPTION A: Fetch details for a specific parcel
-  if (id) {
+  if (id && id !== 'undefined' && id !== 'null') {
     try {
+      console.log(`Fetching details for parcel ID: ${id}`);
       const query = `
         SELECT 
-          "OBJECTID" as id,
+          "OBJECTID"::text as id,
           "SITE_ADDR" as address,
           "LOT_SIZE" as lot_size,
           viability_score as score,
@@ -24,33 +25,37 @@ export async function GET(request: Request) {
           center_lat as lat,
           center_lng as lng
         FROM parcels
-        WHERE "OBJECTID" = $1;
+        WHERE "OBJECTID" = $1::bigint;
       `;
       const result = await pool.query(query, [id]);
-      if (result.rows.length === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      
+      if (result.rows.length === 0) {
+        console.warn(`Parcel ID ${id} not found in database.`);
+        return NextResponse.json({ error: 'Parcel not found' }, { status: 404 });
+      }
       
       const parcel = result.rows[0];
-      // Generate satellite URL on the fly
       parcel.satellite_url = `https://www.google.com/maps/@${parcel.lat},${parcel.lng},400m/data=!3m1!1e3`;
       
       return NextResponse.json(parcel);
     } catch (error) {
+      console.error('API Error (Detail):', error);
       return NextResponse.json({ error: 'Failed to fetch details' }, { status: 500 });
     }
   }
 
-  // OPTION B: Fetch summary list for Map/List View (Optimized Payload)
+  // OPTION B: Fetch summary list for Map/List View
   try {
     const query = `
       SELECT 
-        "OBJECTID",
-        "SITE_ADDR",
-        "LOT_SIZE",
-        viability_score,
-        viability_rank,
+        "OBJECTID"::text as id,
+        "SITE_ADDR" as address,
+        "LOT_SIZE" as lot_size,
+        viability_score as score,
+        viability_rank as rank,
         center_lat,
         center_lng,
-        ST_AsGeoJSON(ST_SimplifyPreserveTopology(geometry, 0.0001))::json as geometry
+        ST_AsGeoJSON(ST_SimplifyPreserveTopology(geometry, 0.00001))::json as geometry
       FROM parcels
       WHERE geometry IS NOT NULL
       ORDER BY viability_score DESC
@@ -63,14 +68,14 @@ export async function GET(request: Request) {
       type: 'FeatureCollection',
       features: result.rows.map((row) => ({
         type: 'Feature',
-        id: row.OBJECTID,
+        id: row.id, // Using string ID for consistency
         geometry: row.geometry,
         properties: {
-          id: row.OBJECTID,
-          address: row.SITE_ADDR,
-          lot_size: row.LOT_SIZE,
-          score: row.viability_score,
-          rank: row.viability_rank,
+          id: row.id,
+          address: row.address,
+          lot_size: row.lot_size,
+          score: row.score,
+          rank: row.rank,
           lat: row.center_lat,
           lng: row.center_lng
         },
@@ -79,7 +84,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(geojson);
   } catch (error) {
-    console.error('Database error:', error);
+    console.error('API Error (Summary):', error);
     return NextResponse.json({ error: 'Failed to fetch parcels' }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Map from '../components/Map';
 import ParcelList from '../components/ParcelList';
 import SiteReport from '../components/SiteReport';
@@ -38,19 +38,27 @@ export default function Home() {
   }, []);
 
   // 2. Lazy Detail Fetch (Triggered on Select)
-  const handleParcelSelect = async (id: string) => {
+  const handleParcelSelect = useCallback(async (id: string) => {
+    if (!id) return;
+    
     setLoadingParcel(true);
-    setSelectedParcel(null); // Clear old one immediately
+    setSelectedParcel(null); 
+    
     try {
       const res = await fetch(`/api/parcels?id=${id}`);
+      if (!res.ok) throw new Error('API request failed');
+      
       const detail = await res.json();
+      if (detail.error) throw new Error(detail.error);
+      
       setSelectedParcel(detail);
     } catch (err) {
       console.error('Detail fetch error:', err);
+      setSelectedParcel({ id, address: 'Error loading details', error: true });
     } finally {
       setLoadingParcel(false);
     }
-  };
+  }, []);
 
   const resetFilters = () => {
     setFilters({
@@ -113,7 +121,7 @@ export default function Home() {
 
         <div className="p-4 border-t border-zinc-800 bg-zinc-900/50 backdrop-blur-md text-center">
           <div className="text-[10px] text-zinc-500 uppercase tracking-widest mb-4 font-semibold">
-            Optimized Engine v2.0
+            Optimized Engine v2.1
           </div>
           <button 
             onClick={resetFilters}
@@ -158,7 +166,10 @@ export default function Home() {
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
               {loadingParcel ? (
                 <div className="h-full flex items-center justify-center">
-                  <Loader2 className="animate-spin text-zinc-700" size={24} />
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="animate-spin text-yellow-500" size={32} />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Querying Database...</span>
+                  </div>
                 </div>
               ) : selectedParcel && (
                 <>
@@ -184,9 +195,11 @@ export default function Home() {
                     <div className="text-xl font-bold">{selectedParcel.address || 'Unknown Address'}</div>
                     <div className="text-xs text-zinc-500 font-mono mt-1 opacity-60">ID: {selectedParcel.id}</div>
                     
-                    <a href={selectedParcel.satellite_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors mt-3">
-                      <Layers size={14} /> Open in Google Satellite <ExternalLink size={12} />
-                    </a>
+                    {selectedParcel.satellite_url && (
+                      <a href={selectedParcel.satellite_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors mt-3">
+                        <Layers size={14} /> Open in Google Satellite <ExternalLink size={12} />
+                      </a>
+                    )}
                   </div>
 
                   {/* Status Summary */}
@@ -227,7 +240,7 @@ export default function Home() {
               )}
             </div>
             
-            {!loadingParcel && selectedParcel && (
+            {!loadingParcel && selectedParcel && !selectedParcel.error && (
               <div className="p-6 border-t border-zinc-800 bg-zinc-900/50">
                 <button 
                   onClick={() => setShowReport(true)}

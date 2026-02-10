@@ -31,7 +31,7 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
       style: 'mapbox://styles/mapbox/dark-v11',
       center: [lng, lat],
       zoom: zoom,
-      fadeDuration: 0 // Performance boost
+      fadeDuration: 0
     });
 
     map.current.on('load', async () => {
@@ -39,8 +39,7 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
 
       map.current.addSource('parcels', {
         type: 'geojson',
-        data: '/api/parcels',
-        promoteId: 'id'
+        data: '/api/parcels'
       });
 
       map.current.addLayer({
@@ -90,10 +89,13 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
       map.current.on('click', 'parcels-fill', (e) => {
         if (e.features && e.features.length > 0) {
           const feature = e.features[0];
-          const id = feature.properties?.id;
-          onParcelSelect(id);
-          if (map.current) {
-            map.current.setFilter('parcels-highlight', ['==', ['get', 'id'], id]);
+          const id = feature.properties?.id || feature.id;
+          
+          if (id) {
+            onParcelSelect(String(id));
+            if (map.current) {
+              map.current.setFilter('parcels-highlight', ['==', ['get', 'id'], String(id)]);
+            }
           }
         }
       });
@@ -105,7 +107,7 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
             map.current.setFeatureState({ source: 'parcels', id: hoveredStateId }, { hover: false });
           }
           hoveredStateId = e.features[0].id;
-          if (map.current) {
+          if (hoveredStateId !== null && map.current) {
             map.current.setFeatureState({ source: 'parcels', id: hoveredStateId }, { hover: true });
           }
         }
@@ -130,7 +132,7 @@ const Map = ({ filters, onParcelSelect }: MapProps) => {
   useEffect(() => {
     if (!map.current || !map.current.isStyleLoaded()) return;
     map.current.setFilter('parcels-fill', ['>=', ['get', 'lot_size'], filters.minAcreage]);
-  }, [filters]);
+  }, [filters.minAcreage]);
 
   return (
     <div className="relative w-full h-full bg-zinc-900">
