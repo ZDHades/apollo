@@ -21,26 +21,26 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
     *   [x] Associate grid data with parcels.
 
 ## Phase 2: Visualization MVP (The "See It" Milestone)
-*   [ ] **Step 2.1: Basic Dashboard**
+*   [x] **Step 2.1: Basic Dashboard**
     *   [x] Install Mapbox & UI dependencies.
     *   [x] Create Map component.
     *   [x] Create Sidebar layout.
-    *   [ ] Connect map to PostGIS API.
+    *   [x] Connect map to PostGIS API.
 
 ## Phase 3: Regulatory (The "Hard" Filter)
-*   [ ] **Step 3.1: Zoning & Bylaws (Pipeline 02)**
+*   [x] **Step 3.1: Zoning & Bylaws (Pipeline 02)**
     *   [x] Research town-specific solar bylaws (Amherst used as MVP model).
     *   [x] Implement zoning status assignment script. (Populated `zoning_status` JSONB).
     *   [ ] Build LLM scraper for automated bylaw extraction (Future enhancement).
 
 ## Phase 4: Constructability & Cost (Refinement)
-*   [ ] **Step 4.1: Physical/Topography (Pipeline 04)**
+*   [x] **Step 4.1: Physical/Topography (Pipeline 04)**
     *   [x] Research LiDAR availability (1m DEM available from MassGIS).
     *   [x] Implement constructability logic. (Populated `physical_status` JSONB).
 *   [ ] **Step 4.2: Infrastructure (Pipeline 05)**
 
 ## Phase 5: Legal & Social (Risk Adjustment)
-*   [ ] **Step 5.1: Legal & Social (Pipeline 06)**
+*   [x] **Step 5.1: Legal & Social (Pipeline 06)**
     *   [x] Research ownership and open space datasets (PROS layer available).
     *   [x] Implement risk scoring logic. (Populated `legal_social_status` JSONB).
 
@@ -54,5 +54,6 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
 ---
 
 ## Log
+*   **2026-02-10**: Connected UI to PostGIS API. Implemented logic for Grid, Zoning, Physical, and Legal pipelines. Successfully populated database for Amherst, MA. Fixed `.env.local` path issue.
 *   **2026-02-09**: Initialized `update-tracker.md`.
 *   **2026-02-08**: Created core documentation (`WORKPLAN.md`, `SOUL.md`, `REQUIREMENTS.md`) and pipeline specs. Created `docker-compose.yml` and `requirements.txt`.
