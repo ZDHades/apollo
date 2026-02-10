@@ -29,6 +29,9 @@ This file tracks the progress of the Apollo project, adhering to the `WORKPLAN.m
 
 ## Phase 3: Regulatory (The "Hard" Filter)
 *   [ ] **Step 3.1: Zoning & Bylaws (Pipeline 02)**
+    *   [x] Research town-specific solar bylaws (Amherst used as MVP model).
+    *   [x] Implement zoning status assignment script. (Populated `zoning_status` JSONB).
+    *   [ ] Build LLM scraper for automated bylaw extraction (Future enhancement).
 
 ## Phase 4: Constructability & Cost (Refinement)
 *   [ ] **Step 4.1: Physical/Topography (Pipeline 04)**
