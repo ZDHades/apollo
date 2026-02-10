@@ -8,13 +8,18 @@ export async function GET() {
         "OBJECTID",
         "SITE_ADDR",
         "LOT_SIZE",
+        viability_score,
+        viability_rank,
         enviro_status,
         grid_status,
         zoning_status,
         physical_status,
         legal_social_status,
+        infrastructure_status,
         ST_AsGeoJSON(geometry)::json as geometry
       FROM parcels
+      WHERE geometry IS NOT NULL
+      ORDER BY viability_score DESC
       LIMIT 1000;
     `;
 
@@ -30,11 +35,14 @@ export async function GET() {
           id: row.OBJECTID,
           address: row.SITE_ADDR,
           lot_size: row.LOT_SIZE,
+          score: row.viability_score,
+          rank: row.viability_rank,
           enviro: row.enviro_status,
           grid: row.grid_status,
           zoning: row.zoning_status,
           physical: row.physical_status,
           legal: row.legal_social_status,
+          infra: row.infrastructure_status,
         },
       })),
     };
