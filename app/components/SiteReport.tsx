@@ -71,7 +71,7 @@ const SiteReport = ({ parcel, onClose }: SiteReportProps) => {
               <h3 className="font-bold text-sm uppercase tracking-wider text-zinc-500 px-2">Key Metrics</h3>
               <div className="grid grid-cols-1 gap-2">
                 <MetricBox label="Lot Size" value={`${parcel.lot_size} ac`} icon={<Ruler size={16}/>} />
-                <MetricBox label="Solar Irr." value="4.2 kWh/m²/d" icon={<Sun size={16}/>} />
+                <MetricBox label="Yield Opt." value={`${(100 - (parcel.physical?.mean_slope_pct || 0)).toFixed(0)}%`} icon={<Sun size={16}/>} />
                 <MetricBox label="Grid Cap" value={`${parcel.grid?.capacity_mw || 0} MW`} icon={<Zap size={16}/>} />
                 <MetricBox label="Wetlands" value={`${((parcel.enviro?.wetlands_overlap_pct || 0) * 100).toFixed(1)}%`} icon={<Droplets size={16}/>} />
               </div>
@@ -93,9 +93,9 @@ const SiteReport = ({ parcel, onClose }: SiteReportProps) => {
                     desc={`Wetland overlap is ${((parcel.enviro?.wetlands_overlap_pct || 0) * 100).toFixed(1)}%. Permitting friction is ${parcel.enviro?.status === 'VIABLE' ? 'Low' : 'Critical'}.`} 
                   />
                   <AnalysisItem 
-                    title="Grid Connectivity" 
-                    status={parcel.grid?.status} 
-                    desc={`Connected to ${parcel.grid?.utility} circuit ${parcel.grid?.circuit_id}. Available capacity is ${parcel.grid?.capacity_mw} MW.`} 
+                    title="Solar Yield Potential" 
+                    status={parcel.physical?.mean_aspect_deg > 135 && parcel.physical?.mean_aspect_deg < 225 ? 'VIABLE' : 'REVIEW'} 
+                    desc={`Parcel orientation is ${parcel.physical?.mean_aspect_deg}° (South is 180°). ${parcel.physical?.mean_aspect_deg > 135 && parcel.physical?.mean_aspect_deg < 225 ? 'Excellent solar exposure.' : 'Sub-optimal orientation factored into score.'}`} 
                   />
                   <AnalysisItem 
                     title="Physical Access" 
