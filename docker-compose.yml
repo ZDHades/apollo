@@ -29,13 +29,12 @@ services:
     image: ngrok/ngrok:latest
     container_name: apollo-ngrok
     restart: always
-    environment:
-      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
-    ports:
-      - "4041:4040"
+    network_mode: host
+    volumes:
+      - ~/.ngrok2:/home/ngrok/.ngrok2:ro
     depends_on:
       - web
-    command: ["http", "web:3000"]
+    command: ["http", "3001"]
 
 volumes:
   postgres_data:
