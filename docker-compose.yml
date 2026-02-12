@@ -29,8 +29,8 @@ services:
     image: ngrok/ngrok:latest
     container_name: apollo-ngrok
     restart: always
-    volumes:
-      - ~/.ngrok2:/home/ngrok/.ngrok2:ro
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
     ports:
       - "4041:4040"
     depends_on:
