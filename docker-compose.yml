@@ -12,5 +12,30 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: apollo-web
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: postgresql://apollo:solar_password@db:5432/apollo
+    depends_on:
+      - db
+    restart: always
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: apollo-ngrok
+    restart: always
+    volumes:
+      - ~/.ngrok2:/home/ngrok/.ngrok2:ro
+    ports:
+      - "4041:4040"
+    depends_on:
+      - web
+    command: ["http", "web:3000"]
+
 volumes:
   postgres_data:
